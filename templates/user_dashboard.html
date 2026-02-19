@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>My Dashboard · {{ user.name }}</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Copy all your existing CSS here */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --bg-body: #f3f6fc;
+            --bg-card: #ffffff;
+            --bg-stats: #f0f4fa;
+            --text-primary: #1a2639;
+            --text-secondary: #3a4a6b;
+            --accent-blue: #0a58ca;
+            --accent-green: #2b7a4b;
+            --accent-red: #b02a37;
+        }
+
+        body {
+            background: var(--bg-body);
+            padding: 16px;
+        }
+
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .welcome {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .welcome i {
+            font-size: 32px;
+            color: var(--accent-blue);
+        }
+
+        .welcome h2 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .welcome span {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            background: var(--accent-red);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-tile {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .withdrawal-card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .otp-section {
+            background: #e8f0fe;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .otp-section.show {
+            display: block;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-card);
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .list-container {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .amount-gain {
+            color: var(--accent-green);
+            font-weight: 700;
+        }
+
+        .amount-loss {
+            color: var(--accent-red);
+            font-weight: 700;
+        }
+
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .welcome h2 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="welcome">
+                <i class="fas fa-user-circle"></i>
+                <h2>Welcome, <span>{{ user.name }}</span></h2>
+            </div>
+            <a href="/logout" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+
+        <!-- Status -->
+        <div class="status-chip" id="connectionStatus">
+            <i class="fas fa-circle-check"></i> Live · Supabase
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-tile">
+                <div class="stat-label">Total</div>
+                <div class="stat-value" id="totalAmount">₹0</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-label">Your share</div>
+                <div class="stat-value" id="yourShare">₹0</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-label">Given</div>
+                <div class="stat-value" id="totalWithdrawn">₹0</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-label">Remaining</div>
+                <div class="stat-value" id="remaining">₹0</div>
+            </div>
+        </div>
+
+        <!-- Withdrawal Form -->
+        <div class="withdrawal-card">
+            <div class="section-title">
+                <i class="fas fa-lock"></i> Withdrawal
+            </div>
+            <input type="number" id="amount" class="input-field" placeholder="Amount (₹)" step="0.01">
+            <input type="text" id="description" class="input-field" placeholder="Description" value="Withdrawal">
+            <button class="btn" id="requestOtpBtn">
+                <i class="fas fa-shield"></i> Request OTP
+            </button>
+
+            <!-- OTP Section -->
+            <div id="otpSection" class="otp-section">
+                <h4 style="margin-bottom: 12px;">OTP Verification</h4>
+                <input type="text" id="otpInput" class="input-field" placeholder="Enter 6-digit OTP" maxlength="6">
+                <button class="btn" id="verifyOtpBtn" style="background: var(--accent-green);">
+                    <i class="fas fa-check"></i> Verify
+                </button>
+                <button class="btn" id="cancelOtpBtn" style="background: var(--accent-red); margin-top: 10px;">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <p style="text-align: center; margin-top: 12px; color: #666;">
+                    <i class="fas fa-clock"></i> <span id="timer">5:00</span>
+                </p>
+            </div>
+            <div id="message" class="message"></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" id="tabTransactions">Transactions</button>
+            <button class="tab-btn" id="tabWithdrawals">Withdrawals</button>
+        </div>
+
+        <!-- Transactions List -->
+        <div id="transactionsPane">
+            <div class="list-container" id="transactionsList">
+                <div class="list-item">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Withdrawals List (hidden by default) -->
+        <div id="withdrawalsPane" style="display: none;">
+            <div class="list-container" id="withdrawalsList">
+                <div class="list-item">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const formatCurrency = (amt) => '₹' + parseFloat(amt || 0).toFixed(2);
+
+        // DOM elements
+        const connectEl = document.getElementById('connectionStatus');
+        const totalEl = document.getElementById('totalAmount');
+        const yourShareEl = document.getElementById('yourShare');
+        const withdrawnEl = document.getElementById('totalWithdrawn');
+        const remainingEl = document.getElementById('remaining');
+        const msgDiv = document.getElementById('message');
+        const otpSection = document.getElementById('otpSection');
+        const otpInput = document.getElementById('otpInput');
+        const timerSpan = document.getElementById('timer');
+        
+        let timerInterval = null;
+        let timeLeft = 300;
+
+        function showMessage(text, type) {
+            msgDiv.className = `message ${type}`;
+            msgDiv.innerHTML = text;
+            setTimeout(() => msgDiv.className = 'message', 5000);
+        }
+
+        function startTimer() {
+            timeLeft = 300;
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const m = Math.floor(timeLeft / 60);
+                const s = timeLeft % 60;
+                timerSpan.innerHTML = `${m}:${s.toString().padStart(2,'0')}`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerSpan.innerHTML = 'Expired';
+                    otpSection.classList.remove('show');
+                }
+            }, 1000);
+        }
+
+        // Load user data
+        async function loadData() {
+            connectEl.innerHTML = '<i class="fas fa-sync fa-spin"></i> Loading...';
+            
+            try {
+                const response = await fetch('/api/user-data');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error);
+                }
+                
+                // Update transactions
+                let transHtml = '';
+                if (!data.transactions || data.transactions.length === 0) {
+                    transHtml = '<div class="list-item">No transactions yet</div>';
+                } else {
+                    data.transactions.forEach(t => {
+                        const date = t.timestamp ? new Date(t.timestamp).toLocaleString() : 'N/A';
+                        transHtml += `<div class="list-item">
+                            <div>
+                                <div style="font-weight:600;">${t.trid || 'TRX'}</div>
+                                <div style="font-size:12px; color:#666;">${date}</div>
+                            </div>
+                            <span class="amount-gain">${formatCurrency(t.amount)}</span>
+                        </div>`;
+                    });
+                }
+                document.getElementById('transactionsList').innerHTML = transHtml;
+                
+                // Update withdrawals
+                let withHtml = '';
+                if (!data.withdrawals || data.withdrawals.length === 0) {
+                    withHtml = '<div class="list-item">No withdrawals yet</div>';
+                } else {
+                    data.withdrawals.forEach(w => {
+                        const date = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
+                        withHtml += `<div class="list-item">
+                            <div>
+                                <div style="font-weight:600;">${w.description || 'Withdrawal'}</div>
+                                <div style="font-size:12px; color:#666;">${date}</div>
+                            </div>
+                            <span class="amount-loss">-${formatCurrency(w.amount)}</span>
+                        </div>`;
+                    });
+                }
+                document.getElementById('withdrawalsList').innerHTML = withHtml;
+                
+                // Update stats
+                totalEl.innerText = formatCurrency(data.totals.totalAmount);
+                yourShareEl.innerText = formatCurrency(data.totals.yourShare);
+                withdrawnEl.innerText = formatCurrency(data.totals.totalWithdrawn);
+                remainingEl.innerText = formatCurrency(data.totals.remaining);
+                
+                connectEl.innerHTML = '<i class="fas fa-circle-check"></i> Live · Supabase';
+                
+            } catch (e) {
+                console.error('Load error:', e);
+                connectEl.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Offline';
+            }
+        }
+
+        // Request OTP
+        document.getElementById('requestOtpBtn').addEventListener('click', async function() {
+            const amount = document.getElementById('amount').value;
+            const description = document.getElementById('description').value || 'Withdrawal';
+            
+            if (!amount || parseFloat(amount) <= 0) {
+                return showMessage('Enter valid amount', 'error');
+            }
+            
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Sending...';
+            
+            try {
+                const response = await fetch('/api/request-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: parseFloat(amount), description })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    otpSection.classList.add('show');
+                    otpInput.value = '';
+                    otpInput.focus();
+                    startTimer();
+                    showMessage('OTP sent to Telegram', 'success');
+                } else {
+                    showMessage(data.error || 'Failed', 'error');
+                }
+            } catch (e) {
+                showMessage('Error: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-shield"></i> Request OTP';
+            }
+        });
+
+        // Verify OTP
+        document.getElementById('verifyOtpBtn').addEventListener('click', async function() {
+            const entered = otpInput.value.trim();
+            if (!entered || entered.length !== 6) {
+                return showMessage('Enter 6-digit OTP', 'error');
+            }
+            
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Verifying...';
+            
+            try {
+                const response = await fetch('/api/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ otp: entered })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('amount').value = '';
+                    document.getElementById('description').value = 'Withdrawal';
+                    otpSection.classList.remove('show');
+                    clearInterval(timerInterval);
+                    showMessage('Withdrawal completed!', 'success');
+                    loadData();
+                } else {
+                    showMessage(data.error || 'Invalid OTP', 'error');
+                    otpInput.value = '';
+                    otpInput.focus();
+                }
+            } catch (e) {
+                showMessage('Error: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check"></i> Verify';
+            }
+        });
+
+        // Cancel OTP
+        document.getElementById('cancelOtpBtn').addEventListener('click', function() {
+            fetch('/api/cancel-otp', { method: 'POST' });
+            otpSection.classList.remove('show');
+            clearInterval(timerInterval);
+            showMessage('OTP cancelled', 'info');
+        });
+
+        // Tabs
+        document.getElementById('tabTransactions').addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('transactionsPane').style.display = 'block';
+            document.getElementById('withdrawalsPane').style.display = 'none';
+        });
+
+        document.getElementById('tabWithdrawals').addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('transactionsPane').style.display = 'none';
+            document.getElementById('withdrawalsPane').style.display = 'block';
+        });
+
+        // Initial load
+        loadData();
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>

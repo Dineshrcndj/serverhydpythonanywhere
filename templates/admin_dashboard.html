@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Admin Dashboard</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logout-btn {
+            background: #f43f5e;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-selector {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .user-selector label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .user-select {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-tile {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px;
+            background: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .list-container {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .amount-gain {
+            color: #10b981;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .amount-loss {
+            color: #ef4444;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .sub-text {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header h1 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-crown"></i> Admin Dashboard</h1>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span><i class="fas fa-user"></i> {{ user.name }}</span>
+                <a href="/logout" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- User Selector -->
+        <div class="user-selector">
+            <label><i class="fas fa-users"></i> Select User:</label>
+            <select id="userSelect" class="user-select" onchange="loadUserData(this.value)">
+                <option value="">-- Choose a user --</option>
+                {% for u in users %}
+                <option value="{{ u.phone_number }}">{{ u.full_name or u.phone_number }} ({{ u.phone_number }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- User Info (shown after selection) -->
+        <div id="userInfo" class="user-info" style="display: none;">
+            <h3 id="selectedUserName"></h3>
+            <p id="selectedUserPhone"></p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="statsGrid" style="display: none;">
+            <div class="stat-tile">
+                <div class="stat-label">Total Amount</div>
+                <div class="stat-value" id="totalAmount">₹0</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-label">Your Share</div>
+                <div class="stat-value" id="yourShare">₹0</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-label">Given</div>
+                <div class="stat-value" id="totalWithdrawn">₹0</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-label">Remaining</div>
+                <div class="stat-value" id="remaining">₹0</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs" id="tabs" style="display: none;">
+            <button class="tab-btn active" id="tabTransactions">Transactions</button>
+            <button class="tab-btn" id="tabWithdrawals">Withdrawals</button>
+        </div>
+
+        <!-- Transactions List -->
+        <div id="transactionsPane" style="display: none;">
+            <div class="list-container" id="transactionsList">
+                <div class="list-item">Select a user to view transactions</div>
+            </div>
+        </div>
+
+        <!-- Withdrawals List -->
+        <div id="withdrawalsPane" style="display: none;">
+            <div class="list-container" id="withdrawalsList">
+                <div class="list-item">Select a user to view withdrawals</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const formatCurrency = (amt) => '₹' + parseFloat(amt || 0).toFixed(2);
+
+        async function loadUserData(phone) {
+            if (!phone) {
+                // Hide all sections
+                document.getElementById('userInfo').style.display = 'none';
+                document.getElementById('statsGrid').style.display = 'none';
+                document.getElementById('tabs').style.display = 'none';
+                document.getElementById('transactionsPane').style.display = 'none';
+                document.getElementById('withdrawalsPane').style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/admin-data/${phone}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    alert('Error loading data: ' + data.error);
+                    return;
+                }
+
+                // Show all sections
+                document.getElementById('userInfo').style.display = 'block';
+                document.getElementById('statsGrid').style.display = 'grid';
+                document.getElementById('tabs').style.display = 'flex';
+                document.getElementById('transactionsPane').style.display = 'block';
+
+                // Update user info
+                document.getElementById('selectedUserName').innerHTML = 
+                    `<i class="fas fa-user"></i> ${data.user.full_name || 'User'}`;
+                document.getElementById('selectedUserPhone').innerHTML = 
+                    `<i class="fas fa-phone"></i> ${data.user.phone_number}`;
+
+                // Update stats
+                document.getElementById('totalAmount').innerText = formatCurrency(data.totals.totalAmount);
+                document.getElementById('yourShare').innerText = formatCurrency(data.totals.yourShare);
+                document.getElementById('totalWithdrawn').innerText = formatCurrency(data.totals.totalWithdrawn);
+                document.getElementById('remaining').innerText = formatCurrency(data.totals.remaining);
+
+                // Update transactions
+                let transHtml = '';
+                if (!data.transactions || data.transactions.length === 0) {
+                    transHtml = '<div class="list-item">No transactions for this user</div>';
+                } else {
+                    data.transactions.forEach(t => {
+                        const date = t.timestamp ? new Date(t.timestamp).toLocaleString() : 'N/A';
+                        transHtml += `<div class="list-item">
+                            <div>
+                                <div style="font-weight:600;">${t.trid || 'TRX'}</div>
+                                <div class="sub-text">${date} · ${t.website || ''}</div>
+                            </div>
+                            <span class="amount-gain">${formatCurrency(t.amount)}</span>
+                        </div>`;
+                    });
+                }
+                document.getElementById('transactionsList').innerHTML = transHtml;
+
+                // Update withdrawals
+                let withHtml = '';
+                if (!data.withdrawals || data.withdrawals.length === 0) {
+                    withHtml = '<div class="list-item">No withdrawals</div>';
+                } else {
+                    data.withdrawals.forEach(w => {
+                        const date = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
+                        withHtml += `<div class="list-item">
+                            <div>
+                                <div style="font-weight:600;">${w.description || 'Withdrawal'}</div>
+                                <div class="sub-text">${date}</div>
+                            </div>
+                            <span class="amount-loss">-${formatCurrency(w.amount)}</span>
+                        </div>`;
+                    });
+                }
+                document.getElementById('withdrawalsList').innerHTML = withHtml;
+
+            } catch (e) {
+                console.error('Error:', e);
+                alert('Failed to load user data');
+            }
+        }
+
+        // Tabs
+        document.getElementById('tabTransactions').addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('transactionsPane').style.display = 'block';
+            document.getElementById('withdrawalsPane').style.display = 'none';
+        });
+
+        document.getElementById('tabWithdrawals').addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('transactionsPane').style.display = 'none';
+            document.getElementById('withdrawalsPane').style.display = 'block';
+        });
+    </script>
+</body>
+</html>

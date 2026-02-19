@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Dashboard · Supabase</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Copy all your existing CSS here - it stays exactly the same */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        :root {
+            --bg-body: #f3f6fc;
+            --bg-card: #ffffff;
+            --bg-stats: #f0f4fa;
+            --bg-otp-highlight: #e8f0fe;
+            --bg-tab-inactive: #eef2f6;
+            --text-primary: #1a2639;
+            --text-secondary: #3a4a6b;
+            --text-soft: #5e6f8d;
+            --border-light: #d9e2ef;
+            --border-focus: #1e5aa7;
+            --accent-blue: #0a58ca;
+            --accent-blue-hover: #084298;
+            --accent-green: #2b7a4b;
+            --accent-green-hover: #1e5f38;
+            --accent-red: #b02a37;
+            --accent-red-hover: #8f1f2b;
+            --accent-grey: #5f6c84;
+            --accent-grey-hover: #3f4a60;
+            --shadow-card: 0 12px 30px rgba(0, 20, 50, 0.1);
+            --shadow-focus: 0 0 0 4px rgba(10, 88, 202, 0.2);
+            --input-bg: #ffffff;
+            --item-divider: #e2e8f0;
+            --message-success-bg: #d5f0de;
+            --message-success-text: #146c3a;
+            --message-error-bg: #fbe3e5;
+            --message-error-text: #ab2b3a;
+            --message-info-bg: #d9ebff;
+            --message-info-text: #0a4980;
+            --stat-label: #3e5670;
+        }
+
+        body.dark-mode {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-stats: #2d3a4f;
+            --bg-otp-highlight: #263449;
+            --bg-tab-inactive: #2d384a;
+            --text-primary: #eef4ff;
+            --text-secondary: #b9c8e6;
+            --text-soft: #9aafd1;
+            --border-light: #3d4c66;
+            --border-focus: #6d9eff;
+            --accent-blue: #3b82f6;
+            --accent-blue-hover: #5a9cff;
+            --accent-green: #34d399;
+            --accent-green-hover: #6ee7b7;
+            --accent-red: #f87171;
+            --accent-red-hover: #fca5a5;
+            --accent-grey: #7f8ea3;
+            --accent-grey-hover: #9fb0cc;
+            --shadow-card: 0 15px 30px rgba(0, 0, 0, 0.6);
+            --shadow-focus: 0 0 0 4px rgba(59, 130, 246, 0.4);
+            --input-bg: #2b3a50;
+            --item-divider: #334155;
+            --message-success-bg: #1c3b2f;
+            --message-success-text: #a7f0c3;
+            --message-error-bg: #4c262b;
+            --message-error-text: #fecac0;
+            --message-info-bg: #1e3b5a;
+            --message-info-text: #b8d6ff;
+            --stat-label: #cbd5e1;
+        }
+
+        body { background: var(--bg-body); }
+
+        .card {
+            max-width: 1000px;
+            width: 100%;
+            background: var(--bg-card);
+            border-radius: 32px;
+            box-shadow: var(--shadow-card);
+            padding: 28px 24px;
+            backdrop-filter: blur(2px);
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header-row h2 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, var(--accent-blue), #1e3c72);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .theme-toggle {
+            background: var(--bg-stats);
+            border: 1px solid var(--border-light);
+            border-radius: 40px;
+            padding: 6px 10px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .theme-toggle button {
+            background: transparent;
+            border: none;
+            font-size: 1.4rem;
+            padding: 8px 14px;
+            border-radius: 32px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: 0.15s;
+        }
+        .theme-toggle button.active-theme {
+            background: var(--bg-card);
+            color: var(--accent-blue);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-light);
+        }
+        .theme-toggle button i { font-size: 1.2rem; }
+
+        .status-chip {
+            display: inline-block;
+            background: var(--bg-stats);
+            border-radius: 30px;
+            padding: 6px 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-light);
+            margin-bottom: 22px;
+        }
+        .status-chip i { margin-right: 6px; color: var(--accent-green); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .stat-tile {
+            background: var(--bg-stats);
+            border-radius: 24px;
+            padding: 20px 10px;
+            text-align: center;
+            border: 1px solid var(--border-light);
+            transition: transform 0.1s ease;
+        }
+        .stat-tile:hover { transform: translateY(-2px); }
+        .stat-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            color: var(--stat-label);
+        }
+        .stat-value {
+            font-size: 2.1rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--text-primary);
+        }
+
+        .withdrawal-card {
+            background: var(--bg-stats);
+            border-radius: 28px;
+            padding: 26px 24px;
+            margin-bottom: 32px;
+            border: 1px solid var(--border-light);
+        }
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .input-group {
+            margin-bottom: 22px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .input-field {
+            width: 100%;
+            padding: 16px 18px;
+            font-size: 1.1rem;
+            background: var(--input-bg);
+            border: 2px solid var(--border-light);
+            border-radius: 18px;
+            color: var(--text-primary);
+            outline: none;
+            transition: 0.2s;
+        }
+        .input-field:focus {
+            border-color: var(--border-focus);
+            box-shadow: var(--shadow-focus);
+        }
+        .btn {
+            border: none;
+            border-radius: 18px;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 16px 22px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.15s;
+            background: var(--accent-grey);
+            color: white;
+            width: 100%;
+        }
+        .btn-primary {
+            background: var(--accent-blue);
+        }
+        .btn-primary:hover { background: var(--accent-blue-hover); }
+        .btn-success {
+            background: var(--accent-green);
+        }
+        .btn-success:hover { background: var(--accent-green-hover); }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-light);
+            color: var(--text-secondary);
+        }
+        .btn-outline:hover { background: var(--bg-card); }
+
+        .otp-elevated {
+            background: var(--bg-otp-highlight);
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 22px;
+            border: 2px dashed var(--accent-blue);
+            display: none;
+        }
+        .otp-elevated.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn { from { opacity: 0.3; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .otp-flex {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .otp-flex input {
+            flex: 2;
+            min-width: 200px;
+            font-size: 1.8rem;
+            letter-spacing: 8px;
+            font-weight: 600;
+            text-align: center;
+            background: var(--input-bg);
+            border: 2px solid var(--border-light);
+            border-radius: 18px;
+            padding: 12px 5px;
+            color: var(--text-primary);
+        }
+        .timer {
+            font-size: 0.95rem;
+            color: var(--accent-red);
+            font-weight: 600;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 6px;
+            margin-bottom: 22px;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 12px 26px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-soft);
+            border-radius: 30px 30px 0 0;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .tab-btn.active {
+            background: var(--bg-stats);
+            color: var(--accent-blue);
+            border-bottom: 3px solid var(--accent-blue);
+        }
+        .tab-pane { display: none; }
+        .tab-pane.active-pane { display: block; }
+
+        .list-container {
+            background: var(--bg-stats);
+            border-radius: 24px;
+            padding: 12px 8px;
+            border: 1px solid var(--border-light);
+            max-height: 380px;
+            overflow-y: auto;
+        }
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 16px;
+            border-bottom: 1px solid var(--item-divider);
+        }
+        .list-item:last-child { border-bottom: none; }
+        .item-main .title {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .item-main .sub {
+            font-size: 0.8rem;
+            color: var(--text-soft);
+        }
+        .amount-gain {
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: var(--accent-green);
+        }
+        .amount-loss {
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: var(--accent-red);
+        }
+        .badge-otp {
+            background: var(--accent-blue);
+            color: white;
+            border-radius: 40px;
+            padding: 2px 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .message {
+            padding: 16px 18px;
+            border-radius: 20px;
+            margin-top: 18px;
+            font-weight: 500;
+            display: none;
+        }
+        .message.success { display: block; background: var(--message-success-bg); color: var(--message-success-text); }
+        .message.error { display: block; background: var(--message-error-bg); color: var(--message-error-text); }
+        .message.info { display: block; background: var(--message-info-bg); color: var(--message-info-text); }
+
+        @media (max-width: 700px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .header-row h2 { font-size: 1.5rem; }
+            .theme-toggle button span { display: none; }
+            .otp-flex { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <!-- Header -->
+        <div class="header-row">
+            <h2><i class="fas fa-shield-halos"></i> Payment Dashboard</h2>
+            <div class="theme-toggle">
+                <button class="active-theme" id="lightModeBtn"><i class="fas fa-sun"></i> <span>Light</span></button>
+                <button id="darkModeBtn"><i class="fas fa-moon"></i> <span>Dark</span></button>
+            </div>
+        </div>
+
+        <div class="status-chip" id="connectionStatus"><i class="fas fa-circle-check"></i> Live · Supabase</div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-tile"><div class="stat-label">Total</div><div class="stat-value" id="totalAmount">₹0</div></div>
+            <div class="stat-tile"><div class="stat-label">Your share</div><div class="stat-value" id="yourShare">₹0</div></div>
+            <div class="stat-tile"><div class="stat-label">Given</div><div class="stat-value" id="totalWithdrawn">₹0</div></div>
+            <div class="stat-tile"><div class="stat-label">Remaining</div><div class="stat-value" id="remaining">₹0</div></div>
+        </div>
+
+        <!-- Withdrawal form OTP -->
+        <div class="withdrawal-card">
+            <div class="section-title"><i class="fas fa-lock"></i> Withdrawal Record</div>
+            <div class="input-group">
+                <label><i class="fas fa-indian-rupee-sign"></i> Amount (₹)</label>
+                <input type="number" id="amount" class="input-field" placeholder="0.00" step="0.01" min="1">
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-pencil"></i> Description</label>
+                <input type="text" id="description" class="input-field" placeholder="e.g. Rent / payment" value="Withdrawal">
+            </div>
+            <button class="btn btn-primary" id="requestOtpBtn">
+                <i class="fas fa-shield"></i> Withdrawal
+            </button>
+
+            <!-- OTP section -->
+            <div id="otpSection" class="otp-elevated">
+                <h4 style="margin-bottom: 12px; color:var(--text-primary)"><i class="fas fa-key"></i> OTP verification</h4>
+                <div class="otp-flex">
+                    <input type="text" id="otpInput" placeholder="------" maxlength="6" inputmode="numeric">
+                    <button class="btn btn-success" id="verifyOtpBtn" style="flex:1; min-width:140px"><i class="fas fa-check"></i> Verify</button>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                    <span class="timer" id="timer">⏱️ 5:00</span>
+                    <button class="btn-outline" id="cancelOtpBtn" style="width:auto; padding:8px 20px;"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+                <p style="font-size:0.85rem; margin-top:12px; color:var(--text-soft)"><i class="fas fa-telegram"></i> OTP sent to Telegram · expires in 5 min</p>
+            </div>
+            <div id="message" class="message"></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-bar">
+            <button class="tab-btn active" id="tabTransactionsBtn"><i class="fas fa-arrows-spin"></i> Transactions</button>
+            <button class="tab-btn" id="tabWithdrawalsBtn"><i class="fas fa-credit-card"></i> Withdrawals</button>
+        </div>
+
+        <!-- Transactions pane -->
+        <div class="tab-pane active-pane" id="transactionsPane">
+            <div class="list-container" id="transactionsList"><div class="list-item">Loading...</div></div>
+        </div>
+        <!-- Withdrawals pane -->
+        <div class="tab-pane" id="withdrawalsPane">
+            <div class="list-container" id="withdrawalsList"><div class="list-item">Loading...</div></div>
+        </div>
+    </div>
+
+    <script>
+        // ========== SUPABASE FLASK CLIENT ==========
+        const formatCurrency = (amt) => '₹' + parseFloat(amt || 0).toFixed(2);
+        const formatDate = (ts) => ts ? new Date(ts).toLocaleString() : 'N/A';
+
+        // DOM elements
+        const connectEl = document.getElementById('connectionStatus');
+        const totalEl = document.getElementById('totalAmount');
+        const yourShareEl = document.getElementById('yourShare');
+        const withdrawnEl = document.getElementById('totalWithdrawn');
+        const remainingEl = document.getElementById('remaining');
+        const msgDiv = document.getElementById('message');
+        const otpSection = document.getElementById('otpSection');
+        const otpInput = document.getElementById('otpInput');
+        const timerSpan = document.getElementById('timer');
+        
+        let timerInterval = null;
+        let timeLeft = 300;
+
+        function showMessage(text, type) {
+            msgDiv.className = `message ${type}`;
+            msgDiv.innerHTML = text;
+            setTimeout(() => msgDiv.className = 'message', 5000);
+        }
+
+        function startTimer() {
+            timeLeft = 300;
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const m = Math.floor(timeLeft / 60);
+                const s = timeLeft % 60;
+                timerSpan.innerHTML = `⏱️ ${m}:${s.toString().padStart(2,'0')}`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerSpan.innerHTML = '⏱️ expired';
+                    otpSection.classList.remove('show');
+                }
+            }, 1000);
+        }
+
+        // ========== API CALLS TO FLASK BACKEND ==========
+
+        async function loadData() {
+            connectEl.innerHTML = '<i class="fas fa-sync fa-spin"></i> syncing...';
+            
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error);
+                }
+                
+                // Update transactions list
+                let transHtml = '';
+                if (!data.transactions || data.transactions.length === 0) {
+                    transHtml = '<div class="list-item">No transactions</div>';
+                } else {
+                    data.transactions.forEach(t => {
+                        const date = t.timestamp ? new Date(t.timestamp).toLocaleString() : 'N/A';
+                        transHtml += `<div class="list-item">
+                            <div class="item-main">
+                                <span class="title">${t.trid || 'TRX'}</span>
+                                <div class="sub">${date} · ${t.website || ''}</div>
+                            </div>
+                            <span class="amount-gain">${formatCurrency(t.amount)}</span>
+                        </div>`;
+                    });
+                }
+                document.getElementById('transactionsList').innerHTML = transHtml;
+                
+                // Update withdrawals list
+                let withHtml = '';
+                if (!data.withdrawals || data.withdrawals.length === 0) {
+                    withHtml = '<div class="list-item">No withdrawals</div>';
+                } else {
+                    data.withdrawals.forEach(w => {
+                        const date = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
+                        withHtml += `<div class="list-item">
+                            <div class="item-main">
+                                <span class="title">${w.description || 'withdrawal'}</span>
+                                <div class="sub">${date} <span class="badge-otp">OTP</span></div>
+                            </div>
+                            <span class="amount-loss">-${formatCurrency(w.amount)}</span>
+                        </div>`;
+                    });
+                }
+                document.getElementById('withdrawalsList').innerHTML = withHtml;
+                
+                // Update stats
+                totalEl.innerText = formatCurrency(data.totals.totalAmount);
+                yourShareEl.innerText = formatCurrency(data.totals.yourShare);
+                withdrawnEl.innerText = formatCurrency(data.totals.totalWithdrawn);
+                remainingEl.innerText = formatCurrency(data.totals.remaining);
+                
+                connectEl.innerHTML = '<i class="fas fa-circle-check"></i> Live · Supabase';
+                
+            } catch (e) {
+                console.error('Load error:', e);
+                connectEl.innerHTML = '<i class="fas fa-triangle-exclamation"></i> offline';
+                showMessage(e.message, 'error');
+            }
+        }
+
+        // Request OTP
+        document.getElementById('requestOtpBtn').addEventListener('click', async function() {
+            const amount = document.getElementById('amount').value;
+            const description = document.getElementById('description').value.trim() || 'Withdrawal';
+            
+            if (!amount || parseFloat(amount) <= 0) {
+                return showMessage('Enter valid amount', 'error');
+            }
+            
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Sending OTP...';
+            
+            try {
+                const response = await fetch('/api/request-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: parseFloat(amount), description })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    otpSection.classList.add('show');
+                    otpInput.value = '';
+                    otpInput.focus();
+                    startTimer();
+                    showMessage('✅ OTP sent to Telegram', 'success');
+                } else {
+                    showMessage('❌ ' + (data.error || 'Failed'), 'error');
+                }
+            } catch (e) {
+                showMessage('❌ Error: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-shield"></i> Withdrawal';
+            }
+        });
+
+        // Verify OTP
+        document.getElementById('verifyOtpBtn').addEventListener('click', async function() {
+            const entered = otpInput.value.trim();
+            if (!entered || entered.length !== 6) {
+                return showMessage('Enter 6-digit OTP', 'error');
+            }
+            
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> verifying...';
+            
+            try {
+                const response = await fetch('/api/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ otp: entered })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('amount').value = '';
+                    document.getElementById('description').value = 'Withdrawal';
+                    otpSection.classList.remove('show');
+                    clearInterval(timerInterval);
+                    showMessage('✅ Withdrawal completed', 'success');
+                    loadData(); // Refresh data
+                } else {
+                    showMessage('❌ ' + (data.error || 'Invalid OTP'), 'error');
+                    otpInput.value = '';
+                    otpInput.focus();
+                }
+            } catch (e) {
+                showMessage('❌ Error: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check"></i> Verify';
+            }
+        });
+
+        // Cancel OTP
+        document.getElementById('cancelOtpBtn').addEventListener('click', async function() {
+            try {
+                await fetch('/api/cancel-otp', { method: 'POST' });
+            } catch (e) {}
+            
+            otpSection.classList.remove('show');
+            clearInterval(timerInterval);
+            showMessage('OTP cancelled', 'info');
+        });
+
+        // Tabs
+        document.getElementById('tabTransactionsBtn').addEventListener('click', (e) => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById('transactionsPane').classList.add('active-pane');
+            document.getElementById('withdrawalsPane').classList.remove('active-pane');
+        });
+        
+        document.getElementById('tabWithdrawalsBtn').addEventListener('click', (e) => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById('withdrawalsPane').classList.add('active-pane');
+            document.getElementById('transactionsPane').classList.remove('active-pane');
+        });
+
+        // Theme toggle
+        const body = document.body;
+        document.getElementById('lightModeBtn').addEventListener('click', () => {
+            body.classList.remove('dark-mode');
+            document.getElementById('lightModeBtn').classList.add('active-theme');
+            document.getElementById('darkModeBtn').classList.remove('active-theme');
+        });
+        
+        document.getElementById('darkModeBtn').addEventListener('click', () => {
+            body.classList.add('dark-mode');
+            document.getElementById('darkModeBtn').classList.add('active-theme');
+            document.getElementById('lightModeBtn').classList.remove('active-theme');
+        });
+
+        // Initial load & periodic refresh
+        loadData();
+        setInterval(loadData, 25000);
+    </script>
+</body>
+</html>
