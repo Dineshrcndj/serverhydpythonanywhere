@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>Admin Dashboard</title>
-    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -42,6 +41,24 @@
             background: linear-gradient(135deg, #667eea, #764ba2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+
+        .admin-nav {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .db-link {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .logout-btn {
@@ -188,18 +205,62 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
             <h1><i class="fas fa-crown"></i> Admin Dashboard</h1>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <span><i class="fas fa-user"></i> {{ user.name }}</span>
-                <a href="/logout" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+            <div class="admin-nav">
+                <a href="/admin/database" class="db-link">
+                    <i class="fas fa-database"></i> Database Manager
                 </a>
+
+                                <!-- Add this button in the header section next to Database Manager -->
+                <div class="admin-nav">
+                    <a href="/admin/backup-now" class="db-link" onclick="triggerBackup(event)">
+                        <i class="fas fa-database"></i> Backup Now
+                    </a>
+                    <!-- <a href="/admin/database" class="db-link">
+                        <i class="fas fa-table"></i> Database Manager
+                    </a> -->
+                    <!-- ... rest of existing code ... -->
+                </div>
+
+                <script>
+                // Add this function to handle backup trigger
+                async function triggerBackup(event) {
+                    event.preventDefault();
+                    
+                    if (confirm('Start manual backup? This will send the database backup to Telegram.')) {
+                        const btn = event.target.closest('a');
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Backing up...';
+                        
+                        try {
+                            const response = await fetch('/admin/backup-now');
+                            const data = await response.json();
+                            
+                            if (data.success) {
+                                alert('✅ Backup completed! Check Telegram for the file.');
+                            } else {
+                                alert('❌ Backup failed: ' + data.error);
+                            }
+                        } catch (e) {
+                            alert('Error: ' + e.message);
+                        } finally {
+                            btn.innerHTML = originalText;
+                        }
+                    }
+                }
+                </script>
+
+
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <span><i class="fas fa-user"></i> {{ user.name }}</span>
+                    <a href="/logout" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
             </div>
         </div>
 
-        <!-- User Selector -->
         <div class="user-selector">
             <label><i class="fas fa-users"></i> Select User:</label>
             <select id="userSelect" class="user-select" onchange="loadUserData(this.value)">
@@ -210,13 +271,11 @@
             </select>
         </div>
 
-        <!-- User Info (shown after selection) -->
         <div id="userInfo" class="user-info" style="display: none;">
             <h3 id="selectedUserName"></h3>
             <p id="selectedUserPhone"></p>
         </div>
 
-        <!-- Stats Grid -->
         <div class="stats-grid" id="statsGrid" style="display: none;">
             <div class="stat-tile">
                 <div class="stat-label">Total Amount</div>
@@ -236,20 +295,17 @@
             </div>
         </div>
 
-        <!-- Tabs -->
         <div class="tabs" id="tabs" style="display: none;">
             <button class="tab-btn active" id="tabTransactions">Transactions</button>
             <button class="tab-btn" id="tabWithdrawals">Withdrawals</button>
         </div>
 
-        <!-- Transactions List -->
         <div id="transactionsPane" style="display: none;">
             <div class="list-container" id="transactionsList">
                 <div class="list-item">Select a user to view transactions</div>
             </div>
         </div>
 
-        <!-- Withdrawals List -->
         <div id="withdrawalsPane" style="display: none;">
             <div class="list-container" id="withdrawalsList">
                 <div class="list-item">Select a user to view withdrawals</div>
@@ -262,7 +318,6 @@
 
         async function loadUserData(phone) {
             if (!phone) {
-                // Hide all sections
                 document.getElementById('userInfo').style.display = 'none';
                 document.getElementById('statsGrid').style.display = 'none';
                 document.getElementById('tabs').style.display = 'none';
@@ -280,25 +335,21 @@
                     return;
                 }
 
-                // Show all sections
                 document.getElementById('userInfo').style.display = 'block';
                 document.getElementById('statsGrid').style.display = 'grid';
                 document.getElementById('tabs').style.display = 'flex';
                 document.getElementById('transactionsPane').style.display = 'block';
 
-                // Update user info
                 document.getElementById('selectedUserName').innerHTML = 
                     `<i class="fas fa-user"></i> ${data.user.full_name || 'User'}`;
                 document.getElementById('selectedUserPhone').innerHTML = 
                     `<i class="fas fa-phone"></i> ${data.user.phone_number}`;
 
-                // Update stats
                 document.getElementById('totalAmount').innerText = formatCurrency(data.totals.totalAmount);
                 document.getElementById('yourShare').innerText = formatCurrency(data.totals.yourShare);
                 document.getElementById('totalWithdrawn').innerText = formatCurrency(data.totals.totalWithdrawn);
                 document.getElementById('remaining').innerText = formatCurrency(data.totals.remaining);
 
-                // Update transactions
                 let transHtml = '';
                 if (!data.transactions || data.transactions.length === 0) {
                     transHtml = '<div class="list-item">No transactions for this user</div>';
@@ -316,7 +367,6 @@
                 }
                 document.getElementById('transactionsList').innerHTML = transHtml;
 
-                // Update withdrawals
                 let withHtml = '';
                 if (!data.withdrawals || data.withdrawals.length === 0) {
                     withHtml = '<div class="list-item">No withdrawals</div>';
@@ -340,7 +390,6 @@
             }
         }
 
-        // Tabs
         document.getElementById('tabTransactions').addEventListener('click', function() {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Manager · SQLite Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .table-selector {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .table-selector label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .table-select {
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        .add-row-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            overflow-x: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .edit-btn, .delete-btn, .save-btn, .cancel-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 0 4px;
+        }
+
+        .edit-btn {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .save-btn {
+            background: #10b981;
+            color: white;
+        }
+
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .editable-input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.5rem;
+            color: #333;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status.success {
+            display: block;
+            background: #d5f0de;
+            color: #146c3a;
+        }
+
+        .status.error {
+            display: block;
+            background: #fbe3e5;
+            color: #ab2b3a;
+        }
+
+        @media (max-width: 768px) {
+            th, td {
+                font-size: 12px;
+                padding: 8px;
+            }
+            
+            .edit-btn, .delete-btn {
+                padding: 4px 8px;
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-database"></i> Database Manager</h1>
+            <a href="/admin" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="table-selector">
+            <label><i class="fas fa-table"></i> Select Table:</label>
+            <select id="tableSelect" class="table-select">
+                <option value="">-- Choose a table --</option>
+                {% for table in tables %}
+                <option value="{{ table }}">{{ table }}</option>
+                {% endfor %}
+            </select>
+            <button class="add-row-btn" id="addRowBtn">
+                <i class="fas fa-plus"></i> Add Row
+            </button>
+            <button class="refresh-btn" id="refreshBtn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div class="table-container" id="tableContainer">
+            <p style="text-align: center; color: #999; padding: 40px;">
+                <i class="fas fa-database"></i> Select a table to view and edit data
+            </p>
+        </div>
+    </div>
+
+    <!-- Add Row Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus"></i> Add New Row</h3>
+                <button class="close-modal" onclick="closeAddModal()">&times;</button>
+            </div>
+            <form id="addForm">
+                <div id="addFormFields"></div>
+                <button type="submit" class="modal-btn modal-btn-primary">Add Row</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentTable = '';
+        let currentColumns = [];
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+            setTimeout(() => {
+                statusDiv.className = 'status';
+            }, 3000);
+        }
+
+        async function loadTableData(tableName) {
+            if (!tableName) return;
+            
+            currentTable = tableName;
+            
+            try {
+                const response = await fetch(`/api/database/table/${tableName}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error);
+                }
+                
+                currentColumns = data.columns;
+                renderTable(data);
+            } catch (e) {
+                showStatus('Error loading table: ' + e.message, 'error');
+            }
+        }
+
+        function renderTable(data) {
+            const container = document.getElementById('tableContainer');
+            
+            if (!data.rows || data.rows.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No data in this table</p>';
+                return;
+            }
+            
+            let html = '<table><thead><tr>';
+            
+            // Headers
+            data.columns.forEach(col => {
+                html += `<th>${col.name}</th>`;
+            });
+            html += '<th>Actions</th></tr></thead><tbody>';
+            
+            // Rows
+            data.rows.forEach(row => {
+                html += '<tr id="row-' + row.id + '">';
+                data.columns.forEach(col => {
+                    let value = row[col.name];
+                    if (value === null || value === undefined) value = '';
+                    if (col.name === 'created_at') {
+                        value = new Date(value).toLocaleString();
+                    }
+                    html += `<td class="cell-${col.name}" data-value="${escapeHtml(String(value))}">
+                        <span class="display-value">${escapeHtml(String(value))}</span>
+                        <input type="text" class="editable-input" style="display:none;" value="${escapeHtml(String(value))}">
+                    </td>`;
+                });
+                html += `<td>
+                    <button class="edit-btn" onclick="editRow(${row.id})"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="delete-btn" onclick="deleteRow(${row.id})"><i class="fas fa-trash"></i> Delete</button>
+                </td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function editRow(rowId) {
+            const row = document.getElementById(`row-${rowId}`);
+            const cells = row.querySelectorAll('td');
+            
+            // Check if already in edit mode
+            if (row.classList.contains('editing')) {
+                return;
+            }
+            
+            row.classList.add('editing');
+            
+            // Replace display values with inputs
+            for (let i = 0; i < cells.length - 1; i++) {
+                const cell = cells[i];
+                const displaySpan = cell.querySelector('.display-value');
+                const input = cell.querySelector('.editable-input');
+                
+                displaySpan.style.display = 'none';
+                input.style.display = 'block';
+            }
+            
+            // Change edit button to save/cancel
+            const actionsCell = cells[cells.length - 1];
+            actionsCell.innerHTML = `
+                <button class="save-btn" onclick="saveRow(${rowId})"><i class="fas fa-save"></i> Save</button>
+                <button class="cancel-btn" onclick="cancelEdit(${rowId})"><i class="fas fa-times"></i> Cancel</button>
+            `;
+        }
+
+        async function saveRow(rowId) {
+            const row = document.getElementById(`row-${rowId}`);
+            const cells = row.querySelectorAll('td');
+            const updates = {};
+            
+            for (let i = 0; i < cells.length - 1; i++) {
+                const colName = currentColumns[i].name;
+                const input = cells[i].querySelector('.editable-input');
+                updates[colName] = input.value;
+            }
+            
+            try {
+                const response = await fetch('/api/database/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        table_name: currentTable,
+                        id: rowId,
+                        updates: updates
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('Row updated successfully', 'success');
+                    loadTableData(currentTable);
+                } else {
+                    showStatus('Error: ' + data.error, 'error');
+                    cancelEdit(rowId);
+                }
+            } catch (e) {
+                showStatus('Error: ' + e.message, 'error');
+                cancelEdit(rowId);
+            }
+        }
+
+        function cancelEdit(rowId) {
+            loadTableData(currentTable);
+        }
+
+        async function deleteRow(rowId) {
+            if (!confirm('Are you sure you want to delete this row? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/database/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        table_name: currentTable,
+                        id: rowId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('Row deleted successfully', 'success');
+                    loadTableData(currentTable);
+                } else {
+                    showStatus('Error: ' + data.error, 'error');
+                }
+            } catch (e) {
+                showStatus('Error: ' + e.message, 'error');
+            }
+        }
+
+        function showAddModal() {
+            if (!currentTable) {
+                showStatus('Please select a table first', 'error');
+                return;
+            }
+            
+            const modal = document.getElementById('addModal');
+            const formFields = document.getElementById('addFormFields');
+            
+            formFields.innerHTML = '';
+            
+            currentColumns.forEach(col => {
+                if (col.name !== 'id' && col.name !== 'created_at') {
+                    formFields.innerHTML += `
+                        <div class="form-group">
+                            <label>${col.name} (${col.type})</label>
+                            <input type="text" name="${col.name}" placeholder="Enter ${col.name}">
+                        </div>
+                    `;
+                }
+            });
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').style.display = 'none';
+        }
+
+        document.getElementById('addForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            try {
+                const response = await fetch('/api/database/insert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        table_name: currentTable,
+                        data: data
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('Row added successfully', 'success');
+                    closeAddModal();
+                    loadTableData(currentTable);
+                } else {
+                    showStatus('Error: ' + result.error, 'error');
+                }
+            } catch (e) {
+                showStatus('Error: ' + e.message, 'error');
+            }
+        });
+
+        document.getElementById('tableSelect').addEventListener('change', (e) => {
+            loadTableData(e.target.value);
+        });
+
+        document.getElementById('addRowBtn').addEventListener('click', showAddModal);
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            if (currentTable) {
+                loadTableData(currentTable);
+            }
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('addModal');
+            if (event.target === modal) {
+                closeAddModal();
+            }
+        }
+    </script>
+</body>
+</html>
